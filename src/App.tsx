@@ -35,9 +35,6 @@ export default function App() {
               onConversationsClick={() =>
                 setCurrentPage("conversations")
               }
-              onTestWebsiteClick={() =>
-                setCurrentPage("test-website")
-              }
               currentPage={currentPage}
             />
             <main className="flex-1 overflow-y-auto">

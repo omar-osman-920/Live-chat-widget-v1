@@ -1,4 +1,4 @@
-import { LayoutDashboard, Radio, Phone, PhoneMissed, MessageSquare, Users, UsersRound, BarChart3, BookUser, Workflow, Megaphone, HelpCircle, Video, ChevronDown, Globe } from 'lucide-react';
+import { LayoutDashboard, Radio, Phone, PhoneMissed, MessageSquare, Users, UsersRound, BarChart3, BookUser, Workflow, Megaphone, HelpCircle, Video, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import exampleImage from 'figma:asset/afa3cd76f8e9bbcdc4d706ec91d2a19a96d1ab88.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -6,11 +6,10 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 interface TopNavProps {
   onChatClick?: () => void;
   onConversationsClick?: () => void;
-  onTestWebsiteClick?: () => void;
   currentPage?: 'settings' | 'chat' | 'conversations' | 'test-website';
 }
 
-export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, currentPage }: TopNavProps) {
+export function TopNav({ onChatClick, onConversationsClick, currentPage }: TopNavProps) {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', onClick: undefined },
     { icon: Radio, label: 'Live', onClick: undefined },
@@ -48,16 +47,6 @@ export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, 
               onClick={onChatClick}
             >
               Chat
-            </Button>
-          )}
-          {currentPage !== 'test-website' && (
-            <Button
-              variant="outline"
-              className="border-blue-500 text-blue-500 hover:bg-blue-50"
-              onClick={onTestWebsiteClick}
-            >
-              <Globe className="w-4 h-4 mr-2" />
-              Test Website
             </Button>
           )}
           <div className="flex items-center gap-2 ml-2">
