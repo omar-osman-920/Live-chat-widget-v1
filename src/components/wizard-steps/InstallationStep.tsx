@@ -7,29 +7,26 @@ import { LiveChatPreview } from '../LiveChatPreview';
 
 interface InstallationStepProps {
   formData: ChatWidgetFormData;
+  onWidgetCreate?: (widgetId: string) => void;
 }
 
-export function InstallationStep({ formData }: InstallationStepProps) {
+export function InstallationStep({ formData, onWidgetCreate }: InstallationStepProps) {
   const [copiedLanguage, setCopiedLanguage] = useState<string | null>(null);
   const [selectedLanguageTab, setSelectedLanguageTab] = useState('English');
+  const [widgetId] = useState(() => {
+    const id = 'widget-' + Math.random().toString(36).substr(2, 9);
+    if (onWidgetCreate) {
+      onWidgetCreate(id);
+    }
+    return id;
+  });
 
   const generateCodeSnippet = (language: string) => {
-    const widgetId = 'widget-' + Math.random().toString(36).substr(2, 9);
-    
-    return `<!-- ${language} Chat Widget -->
-<script>
-  (function(w,d,s,o,f,js,fjs){
-    w['ChatWidget']=o;w[o] = w[o] || function () { (w[o].q = w[o].q || []).push(arguments) };
-    js = d.createElement(s), fjs = d.getElementsByTagName(s)[0];
-    js.id = o; js.src = f; js.async = 1; fjs.parentNode.insertBefore(js, fjs);
-  }(window, document, 'script', 'cw', 'https://widget.maqsam.com/widget.js'));
-  
-  cw('init', {
-    widgetId: '${widgetId}',
-    language: '${language.toLowerCase()}',
-    position: '${formData.position}',
-    color: '${formData.color}'
-  });
+    return `<!-- ${formData.name} - ${language} -->
+<script
+  src="${window.location.origin}/widget-loader.js"
+  data-widget-id="${widgetId}"
+  data-language="${language.toLowerCase()}">
 </script>`;
   };
 
@@ -120,6 +117,19 @@ export function InstallationStep({ formData }: InstallationStepProps) {
               <li>Test the widget in incognito mode to see the visitor experience</li>
               <li>You can customize the widget appearance from the settings panel</li>
             </ul>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-green-900 mb-2">Test Your Widget Now</h4>
+            <p className="text-sm text-green-800 mb-2">
+              Want to test your widget before deploying? Follow these steps:
+            </p>
+            <ol className="text-sm text-green-800 space-y-1 list-decimal list-inside">
+              <li>Copy the code snippet above</li>
+              <li>Navigate to the "Test Website" tab in the top navigation</li>
+              <li>Paste the code into the embed code input field</li>
+              <li>Click "Load Widget" to see your widget in action</li>
+            </ol>
           </div>
         </div>
       </div>

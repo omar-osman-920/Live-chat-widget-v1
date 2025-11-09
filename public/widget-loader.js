@@ -46,7 +46,50 @@
     }
   };
 
-  var config = mockConfigs[widgetId] || mockConfigs['1'];
+  var config;
+  try {
+    var storedConfig = localStorage.getItem('widget-' + widgetId);
+    if (storedConfig) {
+      var parsedConfig = JSON.parse(storedConfig);
+      var langTitle = parsedConfig.title?.[language.charAt(0).toUpperCase() + language.slice(1)] || parsedConfig.title?.['English'] || 'Live Chat';
+      var langWelcomeHeading = parsedConfig.welcomeHeading?.[language.charAt(0).toUpperCase() + language.slice(1)] || parsedConfig.welcomeHeading?.['English'] || 'Hello! 👋';
+      var langWelcomeTagline = parsedConfig.welcomeTagline?.[language.charAt(0).toUpperCase() + language.slice(1)] || parsedConfig.welcomeTagline?.['English'] || 'How can we help you today?';
+
+      config = {
+        name: parsedConfig.name || 'Live Chat Widget',
+        title: langTitle,
+        welcomeHeading: langWelcomeHeading,
+        welcomeTagline: langWelcomeTagline,
+        color: parsedConfig.color || '#8B5CF6',
+        position: parsedConfig.position || 'bottom-right',
+        displayPicture: parsedConfig.displayPicture || '',
+        preChatFormEnabled: parsedConfig.preChatFormEnabled || false,
+        preChatFormFields: parsedConfig.preChatFormFields || []
+      };
+    } else {
+      config = mockConfigs[widgetId] || {
+        name: 'Live Chat Widget',
+        title: 'Live Chat',
+        welcomeHeading: 'Hello! 👋',
+        welcomeTagline: 'How can we help you today?',
+        color: '#8B5CF6',
+        position: 'bottom-right',
+        preChatFormEnabled: false,
+        preChatFormFields: []
+      };
+    }
+  } catch (e) {
+    config = mockConfigs[widgetId] || {
+      name: 'Live Chat Widget',
+      title: 'Live Chat',
+      welcomeHeading: 'Hello! 👋',
+      welcomeTagline: 'How can we help you today?',
+      color: '#8B5CF6',
+      position: 'bottom-right',
+      preChatFormEnabled: false,
+      preChatFormFields: []
+    };
+  }
 
   var styles = document.createElement('style');
   styles.textContent = `
@@ -114,6 +157,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+    }
+    .chat-widget-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .chat-widget-header h3 {
       margin: 0;
@@ -284,12 +333,14 @@
 
     var header = document.createElement('div');
     header.className = 'chat-widget-header';
+    var avatarHtml = config.displayPicture
+      ? '<img src="' + config.displayPicture + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover;" />'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+
     header.innerHTML = `
       <div class="chat-widget-header-left">
         <div class="chat-widget-avatar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-          </svg>
+          ${avatarHtml}
         </div>
         <div>
           <h3>${config.title}</h3>

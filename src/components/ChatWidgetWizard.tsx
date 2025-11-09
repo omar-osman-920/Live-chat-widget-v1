@@ -155,7 +155,22 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
       case 3:
         return <AppearanceStep formData={formData} updateFormData={updateFormData} />;
       case 4:
-        return <InstallationStep formData={formData} />;
+        return <InstallationStep formData={formData} onWidgetCreate={(widgetId) => {
+          const widgetConfig = {
+            id: widgetId,
+            name: formData.name,
+            title: formData.title,
+            welcomeHeading: formData.welcomeHeading,
+            welcomeTagline: formData.welcomeTagline,
+            color: formData.color,
+            position: formData.position,
+            displayPicture: formData.displayPicture,
+            preChatFormEnabled: formData.preChatFormEnabled,
+            preChatFormFields: formData.preChatFormFields,
+            supportedLanguages: formData.supportedLanguages
+          };
+          localStorage.setItem(`widget-${widgetId}`, JSON.stringify(widgetConfig));
+        }} />;
       default:
         return null;
     }
