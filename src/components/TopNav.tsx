@@ -25,7 +25,6 @@ export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, 
     { icon: Megaphone, label: 'Campaigns', onClick: undefined },
     { icon: HelpCircle, label: 'Inquiries', onClick: undefined },
     { icon: Video, label: 'Conferences', onClick: undefined },
-    { icon: Globe, label: 'Test Website', onClick: onTestWebsiteClick },
   ];
 
   return (
@@ -43,12 +42,22 @@ export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, 
         </div>
         <div className="flex items-center gap-2">
           {currentPage !== 'chat' && (
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               className="bg-blue-500 hover:bg-blue-600"
               onClick={onChatClick}
             >
               Chat
+            </Button>
+          )}
+          {currentPage !== 'test-website' && (
+            <Button
+              variant="outline"
+              className="border-blue-500 text-blue-500 hover:bg-blue-50"
+              onClick={onTestWebsiteClick}
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Test Website
             </Button>
           )}
           <div className="flex items-center gap-2 ml-2">
@@ -69,8 +78,7 @@ export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, 
               key={index}
               onClick={item.onClick}
               className={`flex items-center gap-2 px-3 py-3 text-sm whitespace-nowrap ${
-                (currentPage === 'conversations' && item.label === 'Conversations') ||
-                (currentPage === 'test-website' && item.label === 'Test Website')
+                (currentPage === 'conversations' && item.label === 'Conversations')
                   ? 'text-blue-500 border-b-2 border-blue-500'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
