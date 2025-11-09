@@ -4,6 +4,7 @@ import { TopNav } from "./components/TopNav";
 import { MessagingContent } from "./components/MessagingContent";
 import { ChatInterface } from "./components/ChatInterface";
 import { ConversationsPage } from "./components/ConversationsPage";
+import { TestWebsitePage } from "./components/TestWebsitePage";
 
 export default function App() {
   const [activeSection, setActiveSection] =
@@ -12,7 +13,7 @@ export default function App() {
     "live-chat-widget",
   );
   const [currentPage, setCurrentPage] = useState<
-    "settings" | "chat" | "conversations"
+    "settings" | "chat" | "conversations" | "test-website"
   >("settings");
 
   return (
@@ -34,6 +35,9 @@ export default function App() {
               onConversationsClick={() =>
                 setCurrentPage("conversations")
               }
+              onTestWebsiteClick={() =>
+                setCurrentPage("test-website")
+              }
               currentPage={currentPage}
             />
             <main className="flex-1 overflow-y-auto">
@@ -48,10 +52,29 @@ export default function App() {
             onConversationsClick={() =>
               setCurrentPage("conversations")
             }
+            onTestWebsiteClick={() =>
+              setCurrentPage("test-website")
+            }
             currentPage={currentPage}
           />
           <main className="flex-1 overflow-hidden bg-white">
             <ChatInterface />
+          </main>
+        </div>
+      ) : currentPage === "conversations" ? (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TopNav
+            onChatClick={() => setCurrentPage("chat")}
+            onConversationsClick={() =>
+              setCurrentPage("conversations")
+            }
+            onTestWebsiteClick={() =>
+              setCurrentPage("test-website")
+            }
+            currentPage={currentPage}
+          />
+          <main className="flex-1 overflow-hidden">
+            <ConversationsPage />
           </main>
         </div>
       ) : (
@@ -61,10 +84,13 @@ export default function App() {
             onConversationsClick={() =>
               setCurrentPage("conversations")
             }
+            onTestWebsiteClick={() =>
+              setCurrentPage("test-website")
+            }
             currentPage={currentPage}
           />
           <main className="flex-1 overflow-hidden">
-            <ConversationsPage />
+            <TestWebsitePage />
           </main>
         </div>
       )}
