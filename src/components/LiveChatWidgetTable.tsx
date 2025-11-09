@@ -188,39 +188,21 @@ export function LiveChatWidgetTable() {
                   <div className="rounded-lg bg-gray-50 p-4">
                     <pre className="text-sm overflow-auto">
                       <code>{`<!-- ${shareCodeWidget.name} - ${lang} -->
-<script>
-  (function() {
-    var w = window;
-    var d = document;
-    var s = d.createElement('script');
-    s.type = 'text/javascript';
-    s.async = true;
-    s.src = 'https://cdn.example.com/widget.js';
-    s.setAttribute('data-widget-id', '${shareCodeWidget.id}');
-    s.setAttribute('data-language', '${lang.toLowerCase()}');
-    var x = d.getElementsByTagName('script')[0];
-    x.parentNode.insertBefore(s, x);
-  })();
+<script
+  src="${window.location.origin}/widget-loader.js"
+  data-widget-id="${shareCodeWidget.id}"
+  data-language="${lang.toLowerCase()}">
 </script>`}</code>
                     </pre>
                   </div>
-                  <Button 
+                  <Button
                     className="w-full"
                     onClick={() => {
                       const code = `<!-- ${shareCodeWidget.name} - ${lang} -->
-<script>
-  (function() {
-    var w = window;
-    var d = document;
-    var s = d.createElement('script');
-    s.type = 'text/javascript';
-    s.async = true;
-    s.src = 'https://cdn.example.com/widget.js';
-    s.setAttribute('data-widget-id', '${shareCodeWidget.id}');
-    s.setAttribute('data-language', '${lang.toLowerCase()}');
-    var x = d.getElementsByTagName('script')[0];
-    x.parentNode.insertBefore(s, x);
-  })();
+<script
+  src="${window.location.origin}/widget-loader.js"
+  data-widget-id="${shareCodeWidget.id}"
+  data-language="${lang.toLowerCase()}">
 </script>`;
                       navigator.clipboard.writeText(code);
                     }}

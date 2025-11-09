@@ -1,4 +1,4 @@
-import { LayoutDashboard, Radio, Phone, PhoneMissed, MessageSquare, Users, UsersRound, BarChart3, BookUser, Workflow, Megaphone, HelpCircle, Video, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Radio, Phone, PhoneMissed, MessageSquare, Users, UsersRound, BarChart3, BookUser, Workflow, Megaphone, HelpCircle, Video, ChevronDown, Globe } from 'lucide-react';
 import { Button } from './ui/button';
 import exampleImage from 'figma:asset/afa3cd76f8e9bbcdc4d706ec91d2a19a96d1ab88.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -6,10 +6,11 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 interface TopNavProps {
   onChatClick?: () => void;
   onConversationsClick?: () => void;
-  currentPage?: 'settings' | 'chat' | 'conversations';
+  onTestWebsiteClick?: () => void;
+  currentPage?: 'settings' | 'chat' | 'conversations' | 'test-website';
 }
 
-export function TopNav({ onChatClick, onConversationsClick, currentPage }: TopNavProps) {
+export function TopNav({ onChatClick, onConversationsClick, onTestWebsiteClick, currentPage }: TopNavProps) {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', onClick: undefined },
     { icon: Radio, label: 'Live', onClick: undefined },
@@ -24,6 +25,7 @@ export function TopNav({ onChatClick, onConversationsClick, currentPage }: TopNa
     { icon: Megaphone, label: 'Campaigns', onClick: undefined },
     { icon: HelpCircle, label: 'Inquiries', onClick: undefined },
     { icon: Video, label: 'Conferences', onClick: undefined },
+    { icon: Globe, label: 'Test Website', onClick: onTestWebsiteClick },
   ];
 
   return (
@@ -67,7 +69,8 @@ export function TopNav({ onChatClick, onConversationsClick, currentPage }: TopNa
               key={index}
               onClick={item.onClick}
               className={`flex items-center gap-2 px-3 py-3 text-sm whitespace-nowrap ${
-                currentPage === 'conversations' && item.label === 'Conversations'
+                (currentPage === 'conversations' && item.label === 'Conversations') ||
+                (currentPage === 'test-website' && item.label === 'Test Website')
                   ? 'text-blue-500 border-b-2 border-blue-500'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
