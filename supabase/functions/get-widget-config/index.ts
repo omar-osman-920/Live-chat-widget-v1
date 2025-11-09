@@ -69,19 +69,43 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    if (!widget.active) {
+      return new Response(
+        JSON.stringify({ error: 'Widget is not active' }),
+        {
+          status: 403,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
     const langKey = language.charAt(0).toUpperCase() + language.slice(1);
+
     const config = {
       id: widget.id,
       name: widget.name,
       active: widget.active,
+      supportedLanguages: widget.supported_languages || ['English'],
       title: widget.title?.[langKey] || widget.title?.['English'] || 'Live Chat',
+      showStatus: widget.show_status !== false,
       welcomeHeading: widget.welcome_heading?.[langKey] || widget.welcome_heading?.['English'] || 'Hello! 👋',
       welcomeTagline: widget.welcome_tagline?.[langKey] || widget.welcome_tagline?.['English'] || 'How can we help you today?',
+      preChatFormEnabled: widget.pre_chat_form_enabled || false,
+      preChatFormFields: widget.pre_chat_form_fields || [],
+      privacyPolicyEnabled: widget.privacy_policy_enabled || false,
+      privacyPolicyUrl: widget.privacy_policy_url || '',
+      termsOfUseUrl: widget.terms_of_use_url || '',
+      timeoutValue: widget.timeout_value || 5,
+      timeoutUnit: widget.timeout_unit || 'minutes',
+      workingHours: widget.working_hours || {},
+      duringWorkingHoursMessage: widget.during_working_hours_message?.[langKey] || widget.during_working_hours_message?.['English'] || 'We are available!',
+      afterWorkingHoursMessage: widget.after_working_hours_message?.[langKey] || widget.after_working_hours_message?.['English'] || 'We will be back soon!',
       color: widget.color || '#8B5CF6',
       position: widget.position || 'bottom-right',
       displayPicture: widget.display_picture || '',
-      preChatFormEnabled: widget.pre_chat_form_enabled || false,
-      preChatFormFields: widget.pre_chat_form_fields || [],
     };
 
     return new Response(
