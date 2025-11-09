@@ -7,19 +7,12 @@ import { LiveChatPreview } from '../LiveChatPreview';
 
 interface InstallationStepProps {
   formData: ChatWidgetFormData;
-  onWidgetCreate?: (widgetId: string) => void;
+  widgetId: string | null;
 }
 
-export function InstallationStep({ formData, onWidgetCreate }: InstallationStepProps) {
+export function InstallationStep({ formData, widgetId }: InstallationStepProps) {
   const [copiedLanguage, setCopiedLanguage] = useState<string | null>(null);
   const [selectedLanguageTab, setSelectedLanguageTab] = useState('English');
-  const [widgetId] = useState(() => {
-    const id = 'widget-' + Math.random().toString(36).substr(2, 9);
-    if (onWidgetCreate) {
-      onWidgetCreate(id);
-    }
-    return id;
-  });
 
   const generateCodeSnippet = (language: string) => {
     return `<!-- ${formData.name} - ${language} -->
@@ -55,6 +48,16 @@ export function InstallationStep({ formData, onWidgetCreate }: InstallationStepP
   const selectedLanguages = formData.supportedLanguages.length > 0 
     ? formData.supportedLanguages 
     : ['English'];
+
+  if (!widgetId) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500">Creating widget...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex">

@@ -6,6 +6,7 @@ import { GeneralStep } from './wizard-steps/GeneralStep';
 import { GreetingMessageStep } from './wizard-steps/GreetingMessageStep';
 import { AppearanceStep } from './wizard-steps/AppearanceStep';
 import { InstallationStep } from './wizard-steps/InstallationStep';
+import { supabase } from '../lib/supabase';
 
 export interface ChatWidgetFormData {
   name: string;
@@ -85,6 +86,7 @@ const DEFAULT_FORM_DATA: ChatWidgetFormData = {
 export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ChatWidgetFormData>(DEFAULT_FORM_DATA);
+  const [createdWidgetId, setCreatedWidgetId] = useState<string | null>(null);
 
   // Reset form when opening/closing or switching between create/edit mode
   useEffect(() => {
@@ -128,12 +130,6 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
-  const handleNext = () => {
-    if (currentStep < WIZARD_STEPS.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -141,9 +137,53 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
   };
 
   const handleFinish = () => {
-    // Handle widget creation
-    console.log('Creating widget with data:', formData);
     onClose();
+  };
+
+  const handleNext = async () => {
+    if (currentStep === 3 && !createdWidgetId) {
+      try {
+        const { data, error } = await supabase
+          .from('chat_widgets')
+          .insert([
+            {
+              name: formData.name,
+              active: true,
+              supported_languages: formData.supportedLanguages,
+              title: formData.title,
+              show_status: formData.showStatus,
+              welcome_heading: formData.welcomeHeading,
+              welcome_tagline: formData.welcomeTagline,
+              pre_chat_form_enabled: formData.preChatFormEnabled,
+              pre_chat_form_fields: formData.preChatFormFields,
+              privacy_policy_enabled: formData.privacyPolicyEnabled,
+              privacy_policy_url: formData.privacyPolicyUrl,
+              terms_of_use_url: formData.termsOfUseUrl,
+              timeout_value: formData.timeoutValue,
+              timeout_unit: formData.timeoutUnit,
+              working_hours: formData.workingHours,
+              during_working_hours_message: formData.duringWorkingHoursMessage,
+              after_working_hours_message: formData.afterWorkingHoursMessage,
+              position: formData.position,
+              color: formData.color,
+              display_picture: formData.displayPicture || '',
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log('Widget created successfully:', data);
+        setCreatedWidgetId(data.id);
+        setCurrentStep(4);
+      } catch (error) {
+        console.error('Error creating widget:', error);
+        alert('Failed to create widget. Please try again.');
+      }
+    } else if (currentStep < WIZARD_STEPS.length) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const renderStepContent = () => {
@@ -155,22 +195,7 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
       case 3:
         return <AppearanceStep formData={formData} updateFormData={updateFormData} />;
       case 4:
-        return <InstallationStep formData={formData} onWidgetCreate={(widgetId) => {
-          const widgetConfig = {
-            id: widgetId,
-            name: formData.name,
-            title: formData.title,
-            welcomeHeading: formData.welcomeHeading,
-            welcomeTagline: formData.welcomeTagline,
-            color: formData.color,
-            position: formData.position,
-            displayPicture: formData.displayPicture,
-            preChatFormEnabled: formData.preChatFormEnabled,
-            preChatFormFields: formData.preChatFormFields,
-            supportedLanguages: formData.supportedLanguages
-          };
-          localStorage.setItem(`widget-${widgetId}`, JSON.stringify(widgetConfig));
-        }} />;
+        return <InstallationStep formData={formData} widgetId={createdWidgetId} />;
       default:
         return null;
     }

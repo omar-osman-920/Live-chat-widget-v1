@@ -25,9 +25,10 @@ import {
 } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ChatWidgetWizard } from './ChatWidgetWizard';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-interface ChatWidget {
+interface WidgetDisplay {
   id: string;
   active: boolean;
   name: string;
@@ -38,39 +39,68 @@ interface ChatWidget {
 
 export function LiveChatWidgetTable() {
   const [showWizard, setShowWizard] = useState(false);
-  const [editingWidget, setEditingWidget] = useState<ChatWidget | null>(null);
-  const [shareCodeWidget, setShareCodeWidget] = useState<ChatWidget | null>(null);
-  const [widgets, setWidgets] = useState<ChatWidget[]>([
-    {
-      id: '1',
-      active: true,
-      name: 'Main Support Widget',
-      languages: ['English', 'Arabic', 'French'],
-      createdAt: '2024-10-15',
-      linkedWebsites: ['https://example.com', 'https://shop.example.com', 'https://blog.example.com'],
-    },
-    {
-      id: '2',
-      active: true,
-      name: 'Sales Chat Widget',
-      languages: ['English', 'Spanish'],
-      createdAt: '2024-10-20',
-      linkedWebsites: ['https://sales.example.com'],
-    },
-    {
-      id: '3',
-      active: false,
-      name: 'Beta Test Widget',
-      languages: ['English'],
-      createdAt: '2024-11-01',
-      linkedWebsites: ['https://beta.example.com', 'https://staging.example.com'],
-    },
-  ]);
+  const [editingWidget, setEditingWidget] = useState<WidgetDisplay | null>(null);
+  const [shareCodeWidget, setShareCodeWidget] = useState<WidgetDisplay | null>(null);
+  const [widgets, setWidgets] = useState<WidgetDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleActive = (id: string) => {
-    setWidgets(widgets.map(widget => 
-      widget.id === id ? { ...widget, active: !widget.active } : widget
-    ));
+  useEffect(() => {
+    fetchWidgets();
+  }, []);
+
+  const fetchWidgets = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('chat_widgets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const widgetsDisplay: WidgetDisplay[] = (data || []).map((widget) => ({
+        id: widget.id,
+        active: widget.active,
+        name: widget.name,
+        languages: widget.supported_languages,
+        createdAt: new Date(widget.created_at).toISOString().split('T')[0],
+        linkedWebsites: [],
+      }));
+
+      setWidgets(widgetsDisplay);
+    } catch (error) {
+      console.error('Error fetching widgets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleActive = async (id: string) => {
+    const widget = widgets.find(w => w.id === id);
+    if (!widget) return;
+
+    const newActiveState = !widget.active;
+
+    try {
+      const { error } = await supabase
+        .from('chat_widgets')
+        .update({ active: newActiveState })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setWidgets(widgets.map(w =>
+        w.id === id ? { ...w, active: newActiveState } : w
+      ));
+    } catch (error) {
+      console.error('Error updating widget:', error);
+      alert('Failed to update widget status');
+    }
+  };
+
+  const handleWizardClose = () => {
+    setShowWizard(false);
+    fetchWidgets();
   };
 
   return (
@@ -87,19 +117,26 @@ export function LiveChatWidgetTable() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Active</TableHead>
-              <TableHead>Chat Widget Name</TableHead>
-              <TableHead>Supported Languages</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Linked Websites</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {widgets.map((widget) => (
+        {loading ? (
+          <div className="p-8 text-center text-gray-500">Loading widgets...</div>
+        ) : widgets.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            No widgets yet. Click "Create New Chat Widget" to get started.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Active</TableHead>
+                <TableHead>Chat Widget Name</TableHead>
+                <TableHead>Supported Languages</TableHead>
+                <TableHead>Created At</TableHead>
+                <TableHead>Linked Websites</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {widgets.map((widget) => (
               <TableRow key={widget.id}>
                 <TableCell>
                   <Switch
@@ -152,12 +189,13 @@ export function LiveChatWidgetTable() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
-      <ChatWidgetWizard open={showWizard} onClose={() => setShowWizard(false)} />
+      <ChatWidgetWizard open={showWizard} onClose={handleWizardClose} />
 
       <ChatWidgetWizard 
         open={!!editingWidget} 
