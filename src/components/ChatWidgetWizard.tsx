@@ -177,9 +177,10 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
         console.log('Widget created successfully:', data);
         setCreatedWidgetId(data.id);
         setCurrentStep(4);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating widget:', error);
-        alert('Failed to create widget. Please try again.');
+        const errorMessage = error?.message || error?.error_description || 'Unknown error';
+        alert(`Failed to create widget: ${errorMessage}\n\nPlease check the console for more details.`);
       }
     } else if (currentStep < WIZARD_STEPS.length) {
       setCurrentStep(currentStep + 1);
