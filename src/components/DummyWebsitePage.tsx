@@ -121,12 +121,68 @@ export function DummyWebsitePage() {
   return (
     <div className="h-full overflow-y-auto bg-white">
       {showEmbedInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-8">
-            <h3 className="text-2xl font-bold mb-2 text-gray-900">Load Chat Widget</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-8 my-8">
+            <h3 className="text-2xl font-bold mb-2 text-gray-900">Test Your Chat Widget</h3>
             <p className="text-gray-600 mb-6">
-              Paste your widget embed code to test it on this demo site
+              Copy the widget embed code from the Installation step and paste it below to see your configured widget in action on this demo e-commerce site.
             </p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-blue-900 mb-2">Widget Features You Can Test:</h4>
+              <div className="grid md:grid-cols-2 gap-3 text-sm text-blue-800">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Multi-language Support:</strong> Test different language versions</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Position:</strong> Bottom-left or bottom-right placement</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Custom Colors:</strong> Your brand color theme</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Display Picture:</strong> Custom avatar/logo</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Pre-chat Form:</strong> Collect visitor information</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Welcome Messages:</strong> Custom greetings per language</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Working Hours:</strong> Online/offline status</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span><strong>Auto-close Timeout:</strong> Conversation management</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-gray-900 mb-2">How to Get Your Widget Code:</h4>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
+                <li>Go to <strong>Messaging → Live Chat Widget</strong> in the main app</li>
+                <li>Click <strong>"New Widget"</strong> or edit an existing widget</li>
+                <li>Configure all settings through the 4-step wizard:
+                  <ul className="list-disc list-inside ml-6 mt-1 space-y-0.5 text-xs">
+                    <li><strong>General:</strong> Name, languages, title, timeout, pre-chat form, privacy policy</li>
+                    <li><strong>Welcome Message:</strong> Greetings and working hours</li>
+                    <li><strong>Appearance:</strong> Position, color, display picture</li>
+                    <li><strong>Installation:</strong> Copy the generated embed code</li>
+                  </ul>
+                </li>
+                <li>Paste the code here to test it</li>
+              </ol>
+            </div>
+
             <textarea
               value={embedCode}
               onChange={(e) => setEmbedCode(e.target.value)}
@@ -136,8 +192,15 @@ export function DummyWebsitePage() {
   data-widget-id=&quot;your-widget-id&quot;
   data-language=&quot;english&quot;>
 </script>"
-              className="w-full border-2 border-gray-300 rounded-lg p-4 font-mono text-sm h-40 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border-2 border-gray-300 rounded-lg p-4 font-mono text-sm h-32 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> The widget will appear in the corner of this page. You can interact with it just like your website visitors would. All configured features (colors, messages, forms, etc.) will work exactly as configured.
+              </p>
+            </div>
+
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
@@ -360,8 +423,22 @@ export function DummyWebsitePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">Need Help Choosing?</h2>
           <p className="text-xl text-blue-100 mb-8">
-            Our customer support team is ready to assist you. Click the chat widget to start a conversation!
+            Our customer support team is ready to assist you. Look for the chat widget in the bottom corner to start a conversation!
           </p>
+          <div className="bg-white bg-opacity-20 rounded-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold text-white mb-3">Your Widget Will Appear Here</h3>
+            <p className="text-blue-50 text-sm mb-4">
+              Once you load your widget code, it will appear in the bottom-left or bottom-right corner (based on your configuration). All your settings will be reflected:
+            </p>
+            <div className="grid md:grid-cols-2 gap-2 text-left text-sm text-blue-50">
+              <div>✓ Custom color theme</div>
+              <div>✓ Selected language</div>
+              <div>✓ Welcome messages</div>
+              <div>✓ Pre-chat form (if enabled)</div>
+              <div>✓ Display picture</div>
+              <div>✓ Working hours status</div>
+            </div>
+          </div>
           <div className="flex flex-wrap justify-center gap-4">
             <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg">
               Email Us
