@@ -15,11 +15,16 @@ export function InstallationStep({ formData, widgetId }: InstallationStepProps) 
   const [selectedLanguageTab, setSelectedLanguageTab] = useState('English');
 
   const generateCodeSnippet = (language: string) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
     return `<!-- ${formData.name} - ${language} -->
 <script
   src="${window.location.origin}/widget-loader.js"
   data-widget-id="${widgetId}"
-  data-language="${language.toLowerCase()}">
+  data-language="${language.toLowerCase()}"
+  data-api-url="${supabaseUrl}"
+  data-anon-key="${anonKey}">
 </script>`;
   };
 
@@ -115,23 +120,25 @@ export function InstallationStep({ formData, widgetId }: InstallationStepProps) 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="text-sm font-medium text-blue-900 mb-2">Installation Tips</h4>
             <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-              <li>Place the code snippet just before the closing {'</body>'} tag</li>
-              <li>The widget will automatically detect the visitor's language preference</li>
+              <li>Place the code snippet just before the closing {'</body>'} tag on your website</li>
+              <li>The widget works on any website regardless of technology or platform</li>
+              <li>All conversations are stored in real-time and accessible from your dashboard</li>
+              <li>Visitors get a unique ID to maintain conversation history across sessions</li>
               <li>Test the widget in incognito mode to see the visitor experience</li>
-              <li>You can customize the widget appearance from the settings panel</li>
             </ul>
           </div>
 
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="text-sm font-medium text-green-900 mb-2">Widget Successfully Created!</h4>
             <p className="text-sm text-green-800 mb-2">
-              Your widget is ready to be deployed. Here's what you can do:
+              Your live chat widget is ready for deployment:
             </p>
             <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-              <li>Copy and paste the code snippet into your website's HTML</li>
-              <li>The widget will load automatically with all your configured settings</li>
-              <li>All features (colors, messages, forms, working hours) are active</li>
-              <li>Visitors can start chatting with you immediately</li>
+              <li>Embed the code on any website - works universally on all platforms</li>
+              <li>Real-time messaging with automatic conversation tracking</li>
+              <li>All your configured settings (colors, messages, forms) are active</li>
+              <li>Messages are instantly saved to the database for agent responses</li>
+              <li>Each visitor gets a persistent ID for conversation continuity</li>
             </ul>
           </div>
         </div>
