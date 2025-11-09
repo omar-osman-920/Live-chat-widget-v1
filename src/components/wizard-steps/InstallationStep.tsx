@@ -123,16 +123,16 @@ export function InstallationStep({ formData, widgetId }: InstallationStepProps) 
           </div>
 
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-green-900 mb-2">Test Your Widget Now</h4>
+            <h4 className="text-sm font-medium text-green-900 mb-2">Widget Successfully Created!</h4>
             <p className="text-sm text-green-800 mb-2">
-              Want to test your widget before deploying? Follow these steps:
+              Your widget is ready to be deployed. Here's what you can do:
             </p>
-            <ol className="text-sm text-green-800 space-y-1 list-decimal list-inside">
-              <li>Copy the code snippet above</li>
-              <li>Navigate to the "Test Website" tab in the top navigation</li>
-              <li>Paste the code into the embed code input field</li>
-              <li>Click "Load Widget" to see your widget in action</li>
-            </ol>
+            <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+              <li>Copy and paste the code snippet into your website's HTML</li>
+              <li>The widget will load automatically with all your configured settings</li>
+              <li>All features (colors, messages, forms, working hours) are active</li>
+              <li>Visitors can start chatting with you immediately</li>
+            </ul>
           </div>
         </div>
       </div>
