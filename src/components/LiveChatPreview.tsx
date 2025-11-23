@@ -289,6 +289,7 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
   };
 
   const previewTitle = getPreviewText(formData.title) || getTranslation('title');
+  const previewHeading = getPreviewText(formData.welcomeHeading) || 'Hello! 👋';
   const previewTagline = getPreviewText(formData.welcomeTagline) || getTranslation('taglinePlaceholder');
   const previewDuringWorkingHoursMessage = getPreviewText(formData.duringWorkingHoursMessage) || getTranslation('duringHoursPlaceholder');
   const previewAfterWorkingHoursMessage = getPreviewText(formData.afterWorkingHoursMessage) || getTranslation('afterHoursPlaceholder');
@@ -318,8 +319,8 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
           <p className="text-gray-400 text-sm">Your Website</p>
         </div>
 
-        {/* Chat Widget - Always positioned in bottom right */}
-        <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-3 pt-[0px] pr-[0px] pb-[100px] pl-[0px]">
+        {/* Chat Widget - Position based on configuration */}
+        <div className={`absolute bottom-6 z-10 flex flex-col gap-3 pt-[0px] pb-[100px] ${formData.position === 'bottom-left' ? 'left-6 items-start' : 'right-6 items-end'}`}>
           {/* Chat Window */}
           {isExpanded && (
             <div className="w-80 bg-white rounded-lg shadow-2xl overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -344,7 +345,7 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
                     <div className="font-medium">{previewTitle}</div>
                     {formData.showStatus && (
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className={`w-2 h-2 rounded-full ${isDuringWorkingHours ? 'bg-green-400' : 'bg-red-400'}`} />
+                        <div className={`w-2 h-2 rounded-full ${isDuringWorkingHours ? 'bg-green-500' : 'bg-red-500'}`} />
                         <span className="text-xs opacity-90">{isDuringWorkingHours ? getTranslation('online') : getTranslation('offline')}</span>
                       </div>
                     )}
@@ -406,13 +407,13 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
                             <label className="text-xs text-gray-600">
                               {getTranslation('iAgreeToThe')}{' '}
                               {formData.privacyPolicyUrl && (
-                                <a href="#" className="text-blue-500 hover:underline">
+                                <a href="#" className="hover:underline" style={{ color: formData.color }}>
                                   {getTranslation('privacyPolicy')}
                                 </a>
                               )}
                               {formData.privacyPolicyUrl && formData.termsOfUseUrl && ' ' + getTranslation('and') + ' '}
                               {formData.termsOfUseUrl && (
-                                <a href="#" className="text-blue-500 hover:underline">
+                                <a href="#" className="hover:underline" style={{ color: formData.color }}>
                                   {getTranslation('termsOfUse')}
                                 </a>
                               )}
@@ -430,23 +431,11 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
                     </div>
                   ) : (
                     <>
-                      {/* Bot Message */}
-                      {(displayMessage || previewTagline) && (
-                        <div className="flex gap-2">
-                          <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs shrink-0"
-                            style={{ backgroundColor: formData.color }}
-                          >
-                            AI
-                          </div>
-                          <div className={`flex flex-col ${isRTL ? 'items-end' : 'items-start'}`}>
-                            <div className={`bg-white rounded-lg ${isRTL ? 'rounded-tr-none' : 'rounded-tl-none'} p-3 shadow-sm max-w-xs`}>
-                              <p className={`text-sm ${isRTL ? 'text-right' : ''}`}>{displayMessage || previewTagline}</p>
-                            </div>
-                            <div className={`text-xs text-gray-500 mt-[4px] mb-[0px] ${isRTL ? 'ml-auto text-right' : 'mr-auto'}`}>{getTranslation('justNow')}</div>
-                          </div>
-                        </div>
-                      )}
+                      {/* Welcome Section */}
+                      <div className="bg-white rounded-lg p-5 shadow-sm text-center">
+                        <h3 className="text-lg font-semibold mb-2 text-gray-900">{previewHeading}</h3>
+                        <p className="text-sm text-gray-600">{previewTagline || displayMessage}</p>
+                      </div>
                     </>
                   )}
                 </div>
@@ -459,13 +448,13 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
                     <div className="text-xs text-gray-600 text-center">
                       {getTranslation('byClickingAgree')}{' '}
                       {formData.privacyPolicyUrl && (
-                        <a href="#" className="text-blue-500 hover:underline">
+                        <a href="#" className="hover:underline" style={{ color: formData.color }}>
                           {getTranslation('privacyPolicy')}
                         </a>
                       )}
                       {formData.privacyPolicyUrl && formData.termsOfUseUrl && ' ' + getTranslation('and') + ' '}
                       {formData.termsOfUseUrl && (
-                        <a href="#" className="text-blue-500 hover:underline">
+                        <a href="#" className="hover:underline" style={{ color: formData.color }}>
                           {getTranslation('termsOfUse')}
                         </a>
                       )}
@@ -480,17 +469,14 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                  <button className="p-2 hover:bg-gray-100 rounded flex items-center justify-center">
-                    <Smile className="w-4 h-4 text-gray-500" />
-                  </button>
                   <input
                     type="text"
-                    placeholder={getTranslation('replyPlaceholder')}
-                    className="flex-1 text-sm outline-none"
+                    placeholder="Type your message..."
+                    className="flex-1 text-sm outline-none border border-gray-300 rounded-full px-4 py-2.5"
                     disabled
                   />
-                    <button 
-                      className="p-2 rounded"
+                    <button
+                      className="p-2.5 rounded-full"
                       style={{ backgroundColor: formData.color }}
                     >
                       <Send className="w-4 h-4 text-white" />
@@ -512,10 +498,10 @@ export function LiveChatPreview({ formData, selectedLanguage }: LiveChatPreviewP
           {/* Floating Chat Icon - Always visible */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-14 h-14 rounded-full text-white shadow-2xl hover:scale-110 transition-transform flex items-center justify-center shrink-0"
+            className="w-[60px] h-[60px] rounded-full text-white shadow-2xl hover:scale-105 transition-transform flex items-center justify-center shrink-0"
             style={{ backgroundColor: formData.color }}
           >
-            <MessageCircle className="w-6 h-6" />
+            <MessageCircle className="w-7 h-7" />
           </button>
         </div>
       </div>
