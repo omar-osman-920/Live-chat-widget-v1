@@ -120,8 +120,10 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
           }, {} as { [key: string]: string }),
         };
         setFormData(editFormData);
+        setCreatedWidgetId(editWidget.id);
       } else {
         setFormData(DEFAULT_FORM_DATA);
+        setCreatedWidgetId(null);
       }
     }
   }, [open, editWidget]);
@@ -136,12 +138,49 @@ export function ChatWidgetWizard({ open, onClose, editWidget }: ChatWidgetWizard
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    if (editWidget && createdWidgetId) {
+      try {
+        const { error } = await supabase
+          .from('chat_widgets')
+          .update({
+            name: formData.name,
+            supported_languages: formData.supportedLanguages,
+            title: formData.title,
+            show_status: formData.showStatus,
+            welcome_heading: formData.welcomeHeading,
+            welcome_tagline: formData.welcomeTagline,
+            pre_chat_form_enabled: formData.preChatFormEnabled,
+            pre_chat_form_fields: formData.preChatFormFields,
+            privacy_policy_enabled: formData.privacyPolicyEnabled,
+            privacy_policy_url: formData.privacyPolicyUrl,
+            terms_of_use_url: formData.termsOfUseUrl,
+            timeout_value: formData.timeoutValue,
+            timeout_unit: formData.timeoutUnit,
+            working_hours: formData.workingHours,
+            during_working_hours_message: formData.duringWorkingHoursMessage,
+            after_working_hours_message: formData.afterWorkingHoursMessage,
+            position: formData.position,
+            color: formData.color,
+            display_picture: formData.displayPicture || '',
+          })
+          .eq('id', createdWidgetId);
+
+        if (error) throw error;
+
+        console.log('Widget updated successfully');
+      } catch (error: any) {
+        console.error('Error updating widget:', error);
+        const errorMessage = error?.message || error?.error_description || 'Unknown error';
+        alert(`Failed to update widget: ${errorMessage}\n\nPlease check the console for more details.`);
+        return;
+      }
+    }
     onClose();
   };
 
   const handleNext = async () => {
-    if (currentStep === 3 && !createdWidgetId) {
+    if (currentStep === 3 && !editWidget) {
       try {
         const { data, error } = await supabase
           .from('chat_widgets')
