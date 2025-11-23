@@ -43,6 +43,7 @@ export function LiveChatWidgetTable() {
   const [shareCodeWidget, setShareCodeWidget] = useState<WidgetDisplay | null>(null);
   const [widgets, setWidgets] = useState<WidgetDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedLanguage, setCopiedLanguage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWidgets();
@@ -101,6 +102,35 @@ export function LiveChatWidgetTable() {
   const handleWizardClose = () => {
     setShowWizard(false);
     fetchWidgets();
+  };
+
+  const handleCopyCode = async (language: string, code: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+
+      setCopiedLanguage(language);
+      setTimeout(() => setCopiedLanguage(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy code. Please copy manually.');
+    }
   };
 
   return (
@@ -203,7 +233,10 @@ export function LiveChatWidgetTable() {
         editWidget={editingWidget}
       />
 
-      <Dialog open={!!shareCodeWidget} onOpenChange={() => setShareCodeWidget(null)}>
+      <Dialog open={!!shareCodeWidget} onOpenChange={() => {
+        setShareCodeWidget(null);
+        setCopiedLanguage(null);
+      }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Share Widget Code</DialogTitle>
@@ -211,7 +244,7 @@ export function LiveChatWidgetTable() {
               Copy and paste this code into your website to add the chat widget.
             </DialogDescription>
           </DialogHeader>
-          
+
           {shareCodeWidget && (
             <Tabs defaultValue={shareCodeWidget.languages[0]} className="w-full">
               <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${shareCodeWidget.languages.length}, 1fr)` }}>
@@ -221,35 +254,52 @@ export function LiveChatWidgetTable() {
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {shareCodeWidget.languages.map((lang) => (
-                <TabsContent key={lang} value={lang} className="space-y-4">
-                  <div className="rounded-lg bg-gray-50 p-4">
-                    <pre className="text-sm overflow-auto">
-                      <code>{`<!-- ${shareCodeWidget.name} - ${lang} -->
+              {shareCodeWidget.languages.map((lang) => {
+                const code = `<!-- ${shareCodeWidget.name} - ${lang} -->
 <script
-  src="${window.location.origin}/widget-loader.js"
-  data-widget-id="${shareCodeWidget.id}"
-  data-language="${lang.toLowerCase()}">
-</script>`}</code>
-                    </pre>
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      const code = `<!-- ${shareCodeWidget.name} - ${lang} -->
-<script
-  src="${window.location.origin}/widget-loader.js"
+  src="${window.location.origin}/widget-standalone.js"
   data-widget-id="${shareCodeWidget.id}"
   data-language="${lang.toLowerCase()}">
 </script>`;
-                      navigator.clipboard.writeText(code);
-                    }}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Code
-                  </Button>
-                </TabsContent>
-              ))}
+
+                return (
+                  <TabsContent key={lang} value={lang} className="space-y-4 mt-4">
+                    <div className="relative">
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                        <code>{code}</code>
+                      </pre>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute top-2 right-2"
+                        onClick={() => handleCopyCode(lang, code)}
+                      >
+                        {copiedLanguage === lang ? (
+                          <>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy Code
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Installation Instructions</h4>
+                      <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                        <li>Copy the code snippet above</li>
+                        <li>Paste it into your website's HTML, just before the closing {'</body>'} tag</li>
+                        <li>Save and publish your website</li>
+                        <li>The chat widget will appear automatically on your site</li>
+                      </ol>
+                    </div>
+                  </TabsContent>
+                );
+              })}
             </Tabs>
           )}
         </DialogContent>

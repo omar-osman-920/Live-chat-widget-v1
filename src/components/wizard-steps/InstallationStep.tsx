@@ -15,38 +15,40 @@ export function InstallationStep({ formData, widgetId }: InstallationStepProps) 
   const [selectedLanguageTab, setSelectedLanguageTab] = useState('English');
 
   const generateCodeSnippet = (language: string) => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
     return `<!-- ${formData.name} - ${language} -->
 <script
-  src="${window.location.origin}/widget-loader.js"
+  src="${window.location.origin}/widget-standalone.js"
   data-widget-id="${widgetId}"
-  data-language="${language.toLowerCase()}"
-  data-api-url="${supabaseUrl}"
-  data-anon-key="${anonKey}">
+  data-language="${language.toLowerCase()}">
 </script>`;
   };
 
-  const handleCopy = (language: string, code: string) => {
-    // Fallback copy method for when clipboard API is blocked
-    const textArea = document.createElement('textarea');
-    textArea.value = code;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
+  const handleCopy = async (language: string, code: string) => {
     try {
-      document.execCommand('copy');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+
       setCopiedLanguage(language);
       setTimeout(() => setCopiedLanguage(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
-    } finally {
-      document.body.removeChild(textArea);
+      alert('Failed to copy code. Please copy manually.');
     }
   };
 
