@@ -1,9 +1,7 @@
 /**
- * Enterprise Live Chat Widget - Standalone Version
- * Version: 2.1.0
- * No external dependencies - Complete implementation in single file
- *
- * Usage: <script src="https://yourcdn.com/widget-standalone.js?id=CUSTOMER_API_KEY"></script>
+ * Live Chat Widget - Standalone Version
+ * Version: 3.0.0
+ * Supports all configuration options from the wizard
  */
 
 (function() {
@@ -14,7 +12,7 @@
     return;
   }
 
-  const VERSION = '2.1.0';
+  const VERSION = '3.0.0';
   const LOAD_TIMEOUT = 10000;
   const RETRY_ATTEMPTS = 3;
   const RETRY_DELAY = 2000;
@@ -23,8 +21,7 @@
   const scriptSrc = script ? script.src : '';
   const urlParams = new URLSearchParams(scriptSrc.split('?')[1] || '');
 
-  const customerId = urlParams.get('id') || urlParams.get('customer_id') || script?.getAttribute('data-id');
-  const widgetId = urlParams.get('widget_id') || script?.getAttribute('data-widget-id');
+  const widgetId = urlParams.get('widget_id') || urlParams.get('id') || script?.getAttribute('data-widget-id') || script?.getAttribute('data-id');
   const apiUrl = urlParams.get('api_url') || script?.getAttribute('data-api-url') || 'https://cjvqboumfhsjnmyomaji.supabase.co';
   const debug = urlParams.get('debug') === 'true' || script?.getAttribute('data-debug') === 'true';
 
@@ -32,20 +29,19 @@
   let conversationId = null;
   let isOpen = false;
   let messageSubscription = null;
+  let hasAgreed = false;
 
   function log(...args) {
-    if (debug) {
-      console.log('[LiveChat]', ...args);
-    }
+    if (debug) console.log('[LiveChat]', ...args);
   }
 
   function error(...args) {
     console.error('[LiveChat]', ...args);
   }
 
-  if (!customerId && !widgetId) {
-    error('Missing required parameter: id or widget_id');
-    error('Usage: <script src="widget.js?id=YOUR_API_KEY"></script>');
+  if (!widgetId) {
+    error('Missing required parameter: widget_id or id');
+    error('Usage: <script src="widget-standalone.js?widget_id=YOUR_WIDGET_ID"></script>');
     return;
   }
 
@@ -54,7 +50,6 @@
     try {
       let visitorId = localStorage.getItem(storageKey);
       if (visitorId) return visitorId;
-
       visitorId = 'v_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
       localStorage.setItem(storageKey, visitorId);
       return visitorId;
@@ -68,7 +63,6 @@
     try {
       let sessionId = sessionStorage.getItem(storageKey);
       if (sessionId) return sessionId;
-
       sessionId = 's_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
       sessionStorage.setItem(storageKey, sessionId);
       return sessionId;
@@ -80,21 +74,108 @@
   const visitorId = generateVisitorId();
   const sessionId = generateSessionId();
 
+  const TRANSLATIONS = {
+    'English': {
+      online: 'Online',
+      offline: 'Offline',
+      justNow: 'Just now',
+      replyPlaceholder: 'Type your message...',
+      preChatFormTitle: 'Please fill out the form to start chatting',
+      nameLabel: 'Name',
+      namePlaceholder: 'Your name',
+      emailLabel: 'Email',
+      emailPlaceholder: 'your@email.com',
+      phoneLabel: 'Phone Number',
+      phonePlaceholder: '+1 (555) 000-0000',
+      startChat: 'Start Chat',
+      iAgreeToThe: 'I agree to the',
+      privacyPolicy: 'Privacy Policy',
+      termsOfUse: 'Terms of Use',
+      and: 'and',
+      agreeStartChat: 'Agree & Start Chat',
+    },
+    'Arabic': {
+      online: 'متصل',
+      offline: 'غير متصل',
+      justNow: 'الآن',
+      replyPlaceholder: 'اكتب رسالتك...',
+      preChatFormTitle: 'يرجى ملء النموذج لبدء المحادثة',
+      nameLabel: 'الاسم',
+      namePlaceholder: 'اسمك',
+      emailLabel: 'البريد الإلكتروني',
+      emailPlaceholder: 'your@email.com',
+      phoneLabel: 'رقم الهاتف',
+      phonePlaceholder: '+1 (555) 000-0000',
+      startChat: 'بدء المحادثة',
+      iAgreeToThe: 'أوافق على',
+      privacyPolicy: 'سياسة الخصوصية',
+      termsOfUse: 'شروط الاستخدام',
+      and: 'و',
+      agreeStartChat: 'موافق وبدء المحادثة',
+    },
+    'Spanish': {
+      online: 'En línea',
+      offline: 'Desconectado',
+      justNow: 'Justo ahora',
+      replyPlaceholder: 'Escribe tu mensaje...',
+      preChatFormTitle: 'Por favor complete el formulario para comenzar a chatear',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Tu nombre',
+      emailLabel: 'Correo electrónico',
+      emailPlaceholder: 'tu@email.com',
+      phoneLabel: 'Número de teléfono',
+      phonePlaceholder: '+34 600 000 000',
+      startChat: 'Iniciar chat',
+      iAgreeToThe: 'Acepto la',
+      privacyPolicy: 'Política de privacidad',
+      termsOfUse: 'Términos de uso',
+      and: 'y',
+      agreeStartChat: 'Aceptar e iniciar chat',
+    },
+    'French': {
+      online: 'En ligne',
+      offline: 'Hors ligne',
+      justNow: 'À l\'instant',
+      replyPlaceholder: 'Tapez votre message...',
+      preChatFormTitle: 'Veuillez remplir le formulaire pour commencer à discuter',
+      nameLabel: 'Nom',
+      namePlaceholder: 'Votre nom',
+      emailLabel: 'E-mail',
+      emailPlaceholder: 'votre@email.com',
+      phoneLabel: 'Numéro de téléphone',
+      phonePlaceholder: '+33 6 00 00 00 00',
+      startChat: 'Démarrer le chat',
+      iAgreeToThe: 'J\'accepte la',
+      privacyPolicy: 'Politique de confidentialité',
+      termsOfUse: 'Conditions d\'utilisation',
+      and: 'et',
+      agreeStartChat: 'Accepter et démarrer le chat',
+    },
+  };
+
+  function getTranslation(key) {
+    const lang = config?.localization?.default_language || 'English';
+    return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['English'][key];
+  }
+
+  function getLocalizedText(textObj, fallback = '') {
+    if (!textObj) return fallback;
+    const lang = config?.localization?.default_language || 'English';
+    return textObj[lang] || textObj['English'] || fallback;
+  }
+
   async function fetchConfig(attempt = 1) {
     const startTime = Date.now();
     log('Fetching configuration (attempt ' + attempt + '/' + RETRY_ATTEMPTS + ')...');
 
     try {
-      const configUrl = `${apiUrl}/functions/v1/widget-config?${widgetId ? 'widget_id=' + widgetId : 'id=' + customerId}`;
-
+      const configUrl = `${apiUrl}/functions/v1/widget-config?widget_id=${widgetId}`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), LOAD_TIMEOUT);
 
       const response = await fetch(configUrl, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
       });
 
@@ -105,13 +186,8 @@
       }
 
       config = await response.json();
-
       const loadTime = Date.now() - startTime;
       log('Configuration loaded in ' + loadTime + 'ms', config);
-
-      if (loadTime > 2000) {
-        console.warn('[LiveChat] Configuration load time exceeded 2s target: ' + loadTime + 'ms');
-      }
 
       return config;
     } catch (err) {
@@ -132,7 +208,6 @@
 
     const branding = config.branding || {};
     const behavior = config.behavior || {};
-
     const primaryColor = branding.button_color || branding.primary_color || '#3B82F6';
     const position = behavior.position || 'bottom-right';
     const offsetX = behavior.offset_x || 20;
@@ -140,6 +215,7 @@
     const zIndex = behavior.z_index || 999999;
     const borderRadius = branding.border_radius || '12px';
     const fontFamily = branding.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const isRTL = config.localization?.default_language === 'Arabic';
 
     const styles = document.createElement('style');
     styles.id = 'livechat-widget-styles';
@@ -147,6 +223,7 @@
       #livechat-widget-root {
         all: initial;
         font-family: ${fontFamily};
+        direction: ${isRTL ? 'rtl' : 'ltr'};
       }
 
       #livechat-widget-root * {
@@ -199,6 +276,7 @@
         font-family: ${fontFamily};
         z-index: ${zIndex};
         animation: lcw-slide-in 0.3s ease-out;
+        direction: ${isRTL ? 'rtl' : 'ltr'};
       }
 
       .lcw-window.open {
@@ -229,6 +307,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        flex: 1;
       }
 
       .lcw-avatar {
@@ -258,6 +337,21 @@
       .lcw-status {
         font-size: 12px;
         opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+      }
+
+      .lcw-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+      }
+
+      .lcw-status-dot.offline {
+        background: #ef4444;
       }
 
       .lcw-close {
@@ -280,7 +374,7 @@
       }
 
       .lcw-welcome {
-        text-align: center;
+        text-align: ${isRTL ? 'right' : 'center'};
         margin-bottom: 20px;
         padding: 20px;
         background: white;
@@ -299,6 +393,98 @@
         margin: 0;
       }
 
+      .lcw-form {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+
+      .lcw-form-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 16px 0;
+        color: #1a1a1a;
+        text-align: ${isRTL ? 'right' : 'left'};
+      }
+
+      .lcw-form-group {
+        margin-bottom: 12px;
+      }
+
+      .lcw-form-label {
+        display: block;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 4px;
+        text-align: ${isRTL ? 'right' : 'left'};
+      }
+
+      .lcw-form-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        text-align: ${isRTL ? 'right' : 'left'};
+      }
+
+      .lcw-form-input:focus {
+        border-color: ${primaryColor};
+        box-shadow: 0 0 0 3px ${primaryColor}20;
+      }
+
+      .lcw-form-checkbox {
+        display: flex;
+        align-items: start;
+        gap: 8px;
+        margin-top: 12px;
+        text-align: ${isRTL ? 'right' : 'left'};
+      }
+
+      .lcw-form-checkbox input {
+        margin-top: 2px;
+      }
+
+      .lcw-form-checkbox label {
+        font-size: 12px;
+        color: #666;
+        flex: 1;
+      }
+
+      .lcw-form-checkbox a {
+        color: ${primaryColor};
+        text-decoration: none;
+      }
+
+      .lcw-form-checkbox a:hover {
+        text-decoration: underline;
+      }
+
+      .lcw-form-button {
+        width: 100%;
+        padding: 12px;
+        background: ${primaryColor};
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 12px;
+      }
+
+      .lcw-form-button:hover {
+        opacity: 0.9;
+      }
+
+      .lcw-form-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
       .lcw-messages {
         display: flex;
         flex-direction: column;
@@ -315,17 +501,17 @@
       }
 
       .lcw-message.visitor {
-        align-self: flex-end;
+        align-self: ${isRTL ? 'flex-start' : 'flex-end'};
         background: ${primaryColor};
         color: white;
-        border-bottom-right-radius: 4px;
+        ${isRTL ? 'border-bottom-left-radius: 4px;' : 'border-bottom-right-radius: 4px;'}
       }
 
       .lcw-message.agent {
-        align-self: flex-start;
+        align-self: ${isRTL ? 'flex-end' : 'flex-start'};
         background: white;
         color: #1a1a1a;
-        border-bottom-left-radius: 4px;
+        ${isRTL ? 'border-bottom-right-radius: 4px;' : 'border-bottom-left-radius: 4px;'}
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
 
@@ -346,6 +532,26 @@
         background: white;
       }
 
+      .lcw-footer.privacy-consent {
+        flex-direction: column;
+      }
+
+      .lcw-privacy-text {
+        font-size: 12px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+
+      .lcw-privacy-text a {
+        color: ${primaryColor};
+        text-decoration: none;
+      }
+
+      .lcw-privacy-text a:hover {
+        text-decoration: underline;
+      }
+
       .lcw-input {
         flex: 1;
         border: 1px solid #d1d5db;
@@ -354,6 +560,7 @@
         font-size: 14px;
         outline: none;
         font-family: inherit;
+        text-align: ${isRTL ? 'right' : 'left'};
       }
 
       .lcw-input:focus {
@@ -420,6 +627,12 @@
       </svg>
     `;
 
+    const title = getLocalizedText(config.localization?.title, config.behavior?.welcome_message || 'Live Chat');
+    const welcomeHeading = getLocalizedText(config.localization?.welcome_heading, 'Hello! 👋');
+    const welcomeTagline = getLocalizedText(config.localization?.welcome_tagline, config.behavior?.effective_message || 'How can we help you today?');
+    const isOnline = config.agents?.is_online || false;
+    const showStatus = config.features?.show_status !== false;
+
     const chatWindow = document.createElement('div');
     chatWindow.className = 'lcw-window';
     chatWindow.innerHTML = `
@@ -429,21 +642,24 @@
             ${config.branding?.avatar_url ? `<img src="${config.branding.avatar_url}" alt="Agent" />` : '💬'}
           </div>
           <div>
-            <h3 class="lcw-title">${config.behavior?.welcome_message || 'Live Chat'}</h3>
-            <p class="lcw-status">${config.agents?.is_online ? 'Online' : 'Offline'}</p>
+            <h3 class="lcw-title">${title}</h3>
+            ${showStatus ? `<div class="lcw-status">
+              <span class="lcw-status-dot ${isOnline ? '' : 'offline'}"></span>
+              <span>${isOnline ? getTranslation('online') : getTranslation('offline')}</span>
+            </div>` : ''}
           </div>
         </div>
         <button class="lcw-close">&times;</button>
       </div>
       <div class="lcw-body">
         <div class="lcw-welcome">
-          <h3>👋 Hello!</h3>
-          <p>${config.behavior?.effective_message || 'How can we help you today?'}</p>
+          <h3>${welcomeHeading}</h3>
+          <p>${welcomeTagline}</p>
         </div>
         <div class="lcw-messages"></div>
       </div>
       <div class="lcw-footer">
-        <input type="text" class="lcw-input" placeholder="Type your message..." />
+        <input type="text" class="lcw-input" placeholder="${getTranslation('replyPlaceholder')}" />
         <button class="lcw-send">
           <svg viewBox="0 0 24 24">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -460,6 +676,8 @@
     const input = chatWindow.querySelector('.lcw-input');
     const sendBtn = chatWindow.querySelector('.lcw-send');
     const messagesContainer = chatWindow.querySelector('.lcw-messages');
+    const footer = chatWindow.querySelector('.lcw-footer');
+    const bodyContainer = chatWindow.querySelector('.lcw-body');
 
     button.addEventListener('click', toggleChat);
     closeBtn.addEventListener('click', closeChat);
@@ -474,6 +692,8 @@
       chatWindow,
       messagesContainer,
       input,
+      footer,
+      bodyContainer,
       open: openChat,
       close: closeChat,
       toggle: toggleChat,
@@ -486,46 +706,192 @@
     log('Widget created successfully');
   }
 
+  function showPreChatForm() {
+    const preChatForm = config.behavior?.pre_chat_form;
+    if (!preChatForm?.enabled || !preChatForm?.fields || preChatForm.fields.length === 0) {
+      return false;
+    }
+
+    const formFields = preChatForm.fields;
+    const privacyEnabled = config.features?.privacy_policy_enabled;
+    const privacyUrl = config.features?.privacy_policy_url;
+    const termsUrl = config.features?.terms_of_use_url;
+
+    let formHTML = `
+      <div class="lcw-form">
+        <div class="lcw-form-title">${getTranslation('preChatFormTitle')}</div>
+    `;
+
+    if (formFields.includes('name')) {
+      formHTML += `
+        <div class="lcw-form-group">
+          <label class="lcw-form-label">${getTranslation('nameLabel')}</label>
+          <input type="text" class="lcw-form-input" id="lcw-name" placeholder="${getTranslation('namePlaceholder')}" />
+        </div>
+      `;
+    }
+
+    if (formFields.includes('email')) {
+      formHTML += `
+        <div class="lcw-form-group">
+          <label class="lcw-form-label">${getTranslation('emailLabel')}</label>
+          <input type="email" class="lcw-form-input" id="lcw-email" placeholder="${getTranslation('emailPlaceholder')}" />
+        </div>
+      `;
+    }
+
+    if (formFields.includes('phone')) {
+      formHTML += `
+        <div class="lcw-form-group">
+          <label class="lcw-form-label">${getTranslation('phoneLabel')}</label>
+          <input type="tel" class="lcw-form-input" id="lcw-phone" placeholder="${getTranslation('phonePlaceholder')}" />
+        </div>
+      `;
+    }
+
+    if (privacyEnabled && (privacyUrl || termsUrl)) {
+      formHTML += `
+        <div class="lcw-form-checkbox">
+          <input type="checkbox" id="lcw-privacy-check" />
+          <label for="lcw-privacy-check">
+            ${getTranslation('iAgreeToThe')}
+            ${privacyUrl ? `<a href="${privacyUrl}" target="_blank">${getTranslation('privacyPolicy')}</a>` : ''}
+            ${privacyUrl && termsUrl ? ` ${getTranslation('and')} ` : ''}
+            ${termsUrl ? `<a href="${termsUrl}" target="_blank">${getTranslation('termsOfUse')}</a>` : ''}
+          </label>
+        </div>
+      `;
+    }
+
+    formHTML += `
+        <button class="lcw-form-button" id="lcw-start-chat">${getTranslation('startChat')}</button>
+      </div>
+    `;
+
+    window.LiveChatWidget.bodyContainer.insertAdjacentHTML('beforeend', formHTML);
+
+    const startButton = document.getElementById('lcw-start-chat');
+    startButton.addEventListener('click', async () => {
+      const privacyCheck = document.getElementById('lcw-privacy-check');
+      if (privacyEnabled && privacyCheck && !privacyCheck.checked) {
+        alert('Please agree to the privacy policy and terms of use to continue.');
+        return;
+      }
+
+      const name = document.getElementById('lcw-name')?.value || '';
+      const email = document.getElementById('lcw-email')?.value || '';
+      const phone = document.getElementById('lcw-phone')?.value || '';
+
+      document.querySelector('.lcw-form').remove();
+      await startConversation({ name, email, phone });
+      hasAgreed = true;
+      window.LiveChatWidget.input.disabled = false;
+      window.LiveChatWidget.input.focus();
+    });
+
+    return true;
+  }
+
+  function showPrivacyConsent() {
+    const privacyEnabled = config.features?.privacy_policy_enabled;
+    const privacyUrl = config.features?.privacy_policy_url;
+    const termsUrl = config.features?.terms_of_use_url;
+
+    if (!privacyEnabled || (!privacyUrl && !termsUrl)) {
+      return false;
+    }
+
+    window.LiveChatWidget.footer.classList.add('privacy-consent');
+    window.LiveChatWidget.footer.innerHTML = `
+      <div class="lcw-privacy-text">
+        ${privacyUrl ? `<a href="${privacyUrl}" target="_blank">${getTranslation('privacyPolicy')}</a>` : ''}
+        ${privacyUrl && termsUrl ? ` ${getTranslation('and')} ` : ''}
+        ${termsUrl ? `<a href="${termsUrl}" target="_blank">${getTranslation('termsOfUse')}</a>` : ''}
+      </div>
+      <button class="lcw-form-button" id="lcw-agree-btn">${getTranslation('agreeStartChat')}</button>
+    `;
+
+    const agreeBtn = document.getElementById('lcw-agree-btn');
+    agreeBtn.addEventListener('click', async () => {
+      hasAgreed = true;
+      window.LiveChatWidget.footer.classList.remove('privacy-consent');
+      window.LiveChatWidget.footer.innerHTML = `
+        <input type="text" class="lcw-input" placeholder="${getTranslation('replyPlaceholder')}" />
+        <button class="lcw-send">
+          <svg viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      `;
+
+      const input = window.LiveChatWidget.footer.querySelector('.lcw-input');
+      const sendBtn = window.LiveChatWidget.footer.querySelector('.lcw-send');
+      sendBtn.addEventListener('click', sendMessage);
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      window.LiveChatWidget.input = input;
+      await startConversation({});
+      input.focus();
+    });
+
+    window.LiveChatWidget.input.disabled = true;
+    return true;
+  }
+
   async function openChat() {
     if (isOpen) return;
     isOpen = true;
 
     window.LiveChatWidget.chatWindow.classList.add('open');
-    window.LiveChatWidget.input.focus();
 
     if (!conversationId) {
-      try {
-        log('Starting conversation...');
-        const response = await fetch(`${apiUrl}/functions/v1/chat/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            widget_id: config.widget_id,
-            visitor_id: visitorId,
-            session_id: sessionId,
-            context: {
-              page_url: window.location.href,
-              page_title: document.title,
-              referrer: document.referrer,
-              user_agent: navigator.userAgent,
-            }
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          conversationId = data.conversation_id;
-          log('Conversation started:', conversationId);
-
-          subscribeToMessages();
+      const hasPreChatForm = showPreChatForm();
+      if (!hasPreChatForm) {
+        const hasPrivacyConsent = showPrivacyConsent();
+        if (!hasPrivacyConsent) {
+          await startConversation({});
+          window.LiveChatWidget.input.focus();
         }
-      } catch (err) {
-        error('Failed to start conversation:', err);
       }
+    } else {
+      window.LiveChatWidget.input.focus();
     }
 
     const event = new CustomEvent('livechat:opened', { detail: { conversationId } });
     window.dispatchEvent(event);
+  }
+
+  async function startConversation(visitorInfo = {}) {
+    try {
+      log('Starting conversation...');
+      const response = await fetch(`${apiUrl}/functions/v1/chat/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          widget_id: config.widget_id,
+          visitor_id: visitorId,
+          session_id: sessionId,
+          visitor_info: visitorInfo,
+          context: {
+            page_url: window.location.href,
+            page_title: document.title,
+            referrer: document.referrer,
+            user_agent: navigator.userAgent,
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        conversationId = data.conversation_id;
+        log('Conversation started:', conversationId);
+        subscribeToMessages();
+      }
+    } catch (err) {
+      error('Failed to start conversation:', err);
+    }
   }
 
   function closeChat() {
@@ -545,11 +911,12 @@
   }
 
   async function sendMessage() {
-    const message = window.LiveChatWidget.input.value.trim();
+    const input = window.LiveChatWidget.input;
+    const message = input.value.trim();
     if (!message || !conversationId) return;
 
     addMessage('visitor', message);
-    window.LiveChatWidget.input.value = '';
+    input.value = '';
 
     try {
       await fetch(`${apiUrl}/functions/v1/chat/message`, {
@@ -588,43 +955,34 @@
   function subscribeToMessages() {
     if (!conversationId || messageSubscription) return;
 
-    try {
-      const ws = new WebSocket(
-        `${apiUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/realtime/v1/websocket?apikey=${config.api_url.split('//')[1].split('.')[0]}&vsn=1.0.0`
-      );
+    log('Setting up message subscription (polling)...');
 
-      ws.onopen = () => {
-        log('WebSocket connected');
-        ws.send(JSON.stringify({
-          topic: `realtime:public:messages:conversation_id=eq.${conversationId}`,
-          event: 'phx_join',
-          payload: {},
-          ref: '1'
-        }));
-      };
+    let lastMessageId = null;
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'postgres_changes' && data.payload) {
-            const record = data.payload.record;
-            if (record && record.sender_type === 'agent') {
-              addMessage('agent', record.content);
-            }
+    async function pollMessages() {
+      try {
+        const response = await fetch(`${apiUrl}/functions/v1/chat/messages?conversation_id=${conversationId}&after=${lastMessageId || ''}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+              if (msg.sender_type === 'agent' || msg.sender_type === 'bot') {
+                addMessage('agent', msg.content);
+              }
+              lastMessageId = msg.id;
+            });
           }
-        } catch (err) {
-          error('Error processing message:', err);
         }
-      };
+      } catch (err) {
+        error('Error polling messages:', err);
+      }
 
-      ws.onerror = (err) => {
-        error('WebSocket error:', err);
-      };
-
-      messageSubscription = ws;
-    } catch (err) {
-      error('Failed to setup WebSocket:', err);
+      if (isOpen && conversationId) {
+        messageSubscription = setTimeout(pollMessages, 2000);
+      }
     }
+
+    pollMessages();
   }
 
   async function initialize() {

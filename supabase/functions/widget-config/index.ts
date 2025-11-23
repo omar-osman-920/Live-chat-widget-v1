@@ -8,28 +8,28 @@ const corsHeaders = {
   'CDN-Cache-Control': 'max-age=300',
 };
 
-interface WidgetConfig {
+interface ChatWidget {
   id: string;
   name: string;
-  version: string;
-  is_enabled: boolean;
-  branding: any;
-  behavior: any;
-  localization: any;
-  features: any;
+  active: boolean;
+  supported_languages: string[];
+  title: any;
+  show_status: boolean;
+  welcome_heading: any;
+  welcome_tagline: any;
+  pre_chat_form_enabled: boolean;
+  pre_chat_form_fields: string[];
+  privacy_policy_enabled: boolean;
+  privacy_policy_url: string;
+  terms_of_use_url: string;
+  timeout_value: number;
+  timeout_unit: string;
   working_hours: any;
-  routing_rules: any;
-  allowed_domains: string[];
-  blocked_domains: string[];
-}
-
-interface Agent {
-  id: string;
-  display_name: string;
-  avatar_url: string;
-  status: string;
-  departments: string[];
-  skills: string[];
+  during_working_hours_message: any;
+  after_working_hours_message: any;
+  position: string;
+  color: string;
+  display_picture: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -39,13 +39,12 @@ Deno.serve(async (req: Request) => {
 
   try {
     const url = new URL(req.url);
-    const customerId = url.searchParams.get('id') || url.searchParams.get('customer_id');
-    const widgetId = url.searchParams.get('widget_id');
+    const widgetId = url.searchParams.get('widget_id') || url.searchParams.get('id');
     const origin = req.headers.get('origin') || req.headers.get('referer') || '';
 
-    if (!customerId && !widgetId) {
+    if (!widgetId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameter: id or widget_id' }),
+        JSON.stringify({ error: 'Missing required parameter: widget_id or id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -54,33 +53,12 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let query = supabase
-      .from('widget_configs')
-      .select('*, customer_id')
-      .eq('is_enabled', true)
-      .limit(1);
-
-    if (widgetId) {
-      query = query.eq('id', widgetId);
-    } else {
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id, is_active, rate_limit_per_minute')
-        .eq('api_key', customerId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!customer) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid customer ID or inactive account' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      query = query.eq('customer_id', customer.id);
-    }
-
-    const { data: widget, error: widgetError } = await query.maybeSingle();
+    const { data: widget, error: widgetError } = await supabase
+      .from('chat_widgets')
+      .select('*')
+      .eq('id', widgetId)
+      .eq('active', true)
+      .maybeSingle();
 
     if (widgetError) {
       console.error('Database error:', widgetError);
@@ -97,88 +75,84 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const originDomain = origin.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    if (widget.blocked_domains && widget.blocked_domains.includes(originDomain)) {
-      return new Response(
-        JSON.stringify({ error: 'Domain is blocked' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (widget.allowed_domains && widget.allowed_domains.length > 0) {
-      const isAllowed = widget.allowed_domains.some((domain: string) => {
-        if (domain.startsWith('*.')) {
-          const baseDomain = domain.substring(2);
-          return originDomain.endsWith(baseDomain);
-        }
-        return originDomain === domain;
-      });
-
-      if (!isAllowed) {
-        return new Response(
-          JSON.stringify({ error: 'Domain not allowed' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    const { data: agents } = await supabase
-      .from('agents')
-      .select('id, display_name, avatar_url, status, departments, skills')
-      .eq('customer_id', widget.customer_id)
-      .eq('is_active', true)
-      .order('status', { ascending: false });
-
-    const onlineAgents = agents?.filter((a: Agent) => a.status === 'online') || [];
-    const isOnline = onlineAgents.length > 0;
-
     const isWithinWorkingHours = checkWorkingHours(widget.working_hours);
-    const effectivelyOnline = isOnline && (!widget.working_hours?.enabled || isWithinWorkingHours);
+    const isOnline = true;
+    const effectivelyOnline = isOnline && isWithinWorkingHours;
+
+    const defaultLanguage = widget.supported_languages?.[0] || 'English';
 
     const config = {
       widget_id: widget.id,
-      customer_id: widget.customer_id,
-      version: widget.version,
-      cdn_url: `${supabaseUrl}/storage/v1/object/public/widget-assets`,
-      websocket_url: supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://') + '/realtime/v1/websocket',
+      version: '1.0.0',
       api_url: supabaseUrl,
-      
-      branding: widget.branding,
-      behavior: {
-        ...widget.behavior,
-        effective_message: effectivelyOnline 
-          ? widget.behavior.online_message 
-          : widget.behavior.offline_message,
-      },
-      localization: widget.localization,
-      features: widget.features,
-      
-      agents: {
-        online_count: onlineAgents.length,
-        is_online: effectivelyOnline,
-        available_agents: onlineAgents.map((a: Agent) => ({
-          id: a.id,
-          name: a.display_name,
-          avatar: a.avatar_url,
-          departments: a.departments,
-        })),
-      },
-      
-      routing: widget.routing_rules,
-      
-      timestamp: new Date().toISOString(),
-      cache_key: `${widget.id}-${widget.version}`,
-    };
+      websocket_url: supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://') + '/realtime/v1/websocket',
 
-    await supabase.from('api_rate_limits').upsert({
-      customer_id: widget.customer_id,
-      endpoint: '/widget-config',
-      request_count: 1,
-      window_start: new Date(),
-      last_request_at: new Date(),
-    }, {
-      onConflict: 'customer_id,endpoint,window_start',
-    });
+      branding: {
+        primary_color: widget.color,
+        button_color: widget.color,
+        header_bg_color: widget.color,
+        avatar_url: widget.display_picture || '',
+        widget_shape: 'rounded',
+        border_radius: '12px',
+        font_family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      },
+
+      behavior: {
+        position: widget.position || 'bottom-right',
+        offset_x: 20,
+        offset_y: 20,
+        z_index: 999999,
+        welcome_message: widget.title?.[defaultLanguage] || 'Live Chat',
+        online_message: widget.during_working_hours_message?.[defaultLanguage] || 'We are available!',
+        offline_message: widget.after_working_hours_message?.[defaultLanguage] || 'We will be back soon!',
+        effective_message: effectivelyOnline
+          ? (widget.during_working_hours_message?.[defaultLanguage] || 'We are available!')
+          : (widget.after_working_hours_message?.[defaultLanguage] || 'We will be back soon!'),
+        greeting_delay: 2000,
+        auto_open_enabled: false,
+        auto_open_delay: 0,
+        pre_chat_form: {
+          enabled: widget.pre_chat_form_enabled || false,
+          fields: widget.pre_chat_form_fields || [],
+        },
+      },
+
+      localization: {
+        default_language: defaultLanguage,
+        supported_languages: widget.supported_languages || ['English'],
+        title: widget.title || {},
+        welcome_heading: widget.welcome_heading || {},
+        welcome_tagline: widget.welcome_tagline || {},
+        during_working_hours_message: widget.during_working_hours_message || {},
+        after_working_hours_message: widget.after_working_hours_message || {},
+      },
+
+      features: {
+        show_status: widget.show_status !== false,
+        privacy_policy_enabled: widget.privacy_policy_enabled || false,
+        privacy_policy_url: widget.privacy_policy_url || '',
+        terms_of_use_url: widget.terms_of_use_url || '',
+        emoji_enabled: true,
+        file_upload_enabled: false,
+        chat_history_enabled: true,
+      },
+
+      working_hours: widget.working_hours || {},
+
+      agents: {
+        online_count: effectivelyOnline ? 1 : 0,
+        is_online: effectivelyOnline,
+        available_agents: [],
+      },
+
+      timeout: {
+        value: widget.timeout_value || 5,
+        unit: widget.timeout_unit || 'minutes',
+      },
+
+      timestamp: new Date().toISOString(),
+      cache_key: `${widget.id}-1.0.0`,
+    };
 
     return new Response(
       JSON.stringify(config),
@@ -187,7 +161,7 @@ Deno.serve(async (req: Request) => {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
-          'ETag': `"${widget.id}-${widget.version}"`,
+          'ETag': `"${widget.id}-1.0.0"`,
         },
       }
     );
@@ -201,18 +175,20 @@ Deno.serve(async (req: Request) => {
 });
 
 function checkWorkingHours(workingHours: any): boolean {
-  if (!workingHours?.enabled) return true;
+  if (!workingHours || Object.keys(workingHours).length === 0) return true;
 
   const now = new Date();
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const currentDay = days[now.getDay()];
-  
-  const schedule = workingHours.schedule?.[currentDay];
-  if (!schedule || schedule.length === 0) return false;
+
+  const schedule = workingHours[currentDay];
+  if (!schedule || !schedule.enabled || !schedule.slots || schedule.slots.length === 0) {
+    return false;
+  }
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-  return schedule.some((slot: any) => {
+  return schedule.slots.some((slot: any) => {
     const [startHour, startMin] = slot.start.split(':').map(Number);
     const [endHour, endMin] = slot.end.split(':').map(Number);
     const startMinutes = startHour * 60 + startMin;
