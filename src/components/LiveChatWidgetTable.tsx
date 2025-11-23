@@ -266,9 +266,11 @@ export function LiveChatWidgetTable() {
                   return (
                     <TabsContent key={lang} value={lang} className="space-y-4 mt-4">
                       <div className="relative">
-                        <pre className="bg-gray-900 text-gray-100 p-4 pr-28 rounded-lg overflow-x-auto text-sm whitespace-pre-wrap break-all">
-                          <code className="block">{code}</code>
-                        </pre>
+                        <div className="bg-gray-900 text-gray-100 p-4 pb-2 pr-32 rounded-lg text-sm">
+                          <pre className="whitespace-pre-wrap break-words overflow-hidden m-0 font-mono">
+                            <code className="block">{code}</code>
+                          </pre>
+                        </div>
                         <Button
                           size="sm"
                           variant="secondary"
