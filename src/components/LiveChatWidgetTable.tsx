@@ -237,7 +237,7 @@ export function LiveChatWidgetTable() {
         setShareCodeWidget(null);
         setCopiedLanguage(null);
       }}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Share Widget Code</DialogTitle>
             <DialogDescription>
@@ -246,61 +246,63 @@ export function LiveChatWidgetTable() {
           </DialogHeader>
 
           {shareCodeWidget && (
-            <Tabs defaultValue={shareCodeWidget.languages[0]} className="w-full">
-              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${shareCodeWidget.languages.length}, 1fr)` }}>
-                {shareCodeWidget.languages.map((lang) => (
-                  <TabsTrigger key={lang} value={lang}>
-                    {lang}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {shareCodeWidget.languages.map((lang) => {
-                const code = `<!-- ${shareCodeWidget.name} - ${lang} -->
+            <div className="mt-4">
+              <Tabs defaultValue={shareCodeWidget.languages[0]} className="w-full">
+                <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${shareCodeWidget.languages.length}, 1fr)` }}>
+                  {shareCodeWidget.languages.map((lang) => (
+                    <TabsTrigger key={lang} value={lang}>
+                      {lang}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {shareCodeWidget.languages.map((lang) => {
+                  const code = `<!-- ${shareCodeWidget.name} - ${lang} -->
 <script
   src="${window.location.origin}/widget-standalone.js"
   data-widget-id="${shareCodeWidget.id}"
   data-language="${lang.toLowerCase()}">
 </script>`;
 
-                return (
-                  <TabsContent key={lang} value={lang} className="space-y-4 mt-4">
-                    <div className="relative">
-                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-                        <code>{code}</code>
-                      </pre>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute top-2 right-2"
-                        onClick={() => handleCopyCode(lang, code)}
-                      >
-                        {copiedLanguage === lang ? (
-                          <>
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy Code
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                  return (
+                    <TabsContent key={lang} value={lang} className="space-y-4 mt-4">
+                      <div className="relative">
+                        <pre className="bg-gray-900 text-gray-100 p-4 pr-28 rounded-lg overflow-x-auto text-sm whitespace-pre-wrap break-all">
+                          <code className="block">{code}</code>
+                        </pre>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="absolute top-2 right-2"
+                          onClick={() => handleCopyCode(lang, code)}
+                        >
+                          {copiedLanguage === lang ? (
+                            <>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy Code
+                            </>
+                          )}
+                        </Button>
+                      </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-blue-900 mb-2">Installation Instructions</h4>
-                      <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                        <li>Copy the code snippet above</li>
-                        <li>Paste it into your website's HTML, just before the closing {'</body>'} tag</li>
-                        <li>Save and publish your website</li>
-                        <li>The chat widget will appear automatically on your site</li>
-                      </ol>
-                    </div>
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-blue-900 mb-2">Installation Instructions</h4>
+                        <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                          <li>Copy the code snippet above</li>
+                          <li>Paste it into your website's HTML, just before the closing {'</body>'} tag</li>
+                          <li>Save and publish your website</li>
+                          <li>The chat widget will appear automatically on your site</li>
+                        </ol>
+                      </div>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
           )}
         </DialogContent>
       </Dialog>
