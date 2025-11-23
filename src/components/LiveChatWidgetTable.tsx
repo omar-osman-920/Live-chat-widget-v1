@@ -237,7 +237,7 @@ export function LiveChatWidgetTable() {
         setShareCodeWidget(null);
         setCopiedLanguage(null);
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>Share Widget Code</DialogTitle>
             <DialogDescription>
@@ -246,9 +246,9 @@ export function LiveChatWidgetTable() {
           </DialogHeader>
 
           {shareCodeWidget && (
-            <div className="mt-4">
-              <Tabs defaultValue={shareCodeWidget.languages[0]} className="w-full">
-                <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${shareCodeWidget.languages.length}, 1fr)` }}>
+            <div className="mt-4 min-w-0">
+              <Tabs defaultValue={shareCodeWidget.languages[0]} className="w-full min-w-0">
+                <TabsList className="grid w-full min-w-0" style={{ gridTemplateColumns: `repeat(${shareCodeWidget.languages.length}, 1fr)` }}>
                   {shareCodeWidget.languages.map((lang) => (
                     <TabsTrigger key={lang} value={lang}>
                       {lang}
@@ -265,9 +265,9 @@ export function LiveChatWidgetTable() {
 
                   return (
                     <TabsContent key={lang} value={lang} className="space-y-4 mt-4">
-                      <div className="relative">
-                        <div className="bg-gray-900 text-gray-100 p-4 pb-2 pr-32 rounded-lg text-sm">
-                          <pre className="whitespace-pre-wrap break-words overflow-hidden m-0 font-mono">
+                      <div className="relative min-w-0">
+                        <div className="bg-gray-900 text-gray-100 p-4 pb-2 pr-32 rounded-lg text-sm min-w-0">
+                          <pre className="whitespace-pre-wrap m-0 font-mono min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                             <code className="block">{code}</code>
                           </pre>
                         </div>
